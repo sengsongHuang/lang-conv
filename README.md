@@ -1,9 +1,10 @@
 # lang-conv
 
-這個專案提供兩個用 Ollama 產生語言學習內容的工具：
+這個專案提供三個工具：
 
-- `make_flashcard.py`：把單字清單轉成 Markdown 單字卡
-- `make_vocab_csv.py`：把單字清單轉成 CSV（單字 + 繁體中文解釋）
+- [`make_flashcard.py`](#1-make_flashcardpy)：把單字清單轉成 Markdown 單字卡
+- [`make_vocab_csv.py`](#2-make_vocab_csvpy)：把單字清單轉成 CSV（單字 + 繁體中文解釋）
+- [`dedupe_words.py`](#3-dedupe_wordspy)：清理 txt 重複詞（保留首次出現，順序不變）
 
 ## 需求
 
@@ -79,7 +80,32 @@ python3 make_flashcard.py -l de -i samples/words_de.txt -o samples/cards_de.md
 
 # 產生德文 CSV
 python3 make_vocab_csv.py -l de -i samples/words_de.txt -o samples/vocab_de.csv
+
+# 清理重複詞（直接覆寫原檔，並備份成 .old）
+python3 dedupe_words.py samples/words_de.txt
 ```
+
+## 3) dedupe_words.py
+
+用途：移除輸入 txt 的重複詞，只保留第一個出現，順序不變。
+
+### 指令
+
+```bash
+python3 dedupe_words.py <text_file_name>
+```
+
+### 行為
+
+- 每行視為一筆資料（空白行忽略）
+- 大小寫視為同一字（例如 `Apple` 與 `apple` 視為重複）
+- 若有重複：
+  - 備份原檔為同名 `.old`（例如 `words.txt.old`）
+  - 覆寫原檔為去重後內容
+  - 顯示：`已讀取 n 筆資料，已刪除 m 筆重複資料，已儲存 k 筆資料`
+- 若沒有重複：
+  - 不改檔案
+  - 顯示：`已讀取 n 筆資料，沒有重複`
 
 ## 模板位置
 
