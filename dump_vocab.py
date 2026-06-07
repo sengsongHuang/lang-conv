@@ -3,7 +3,13 @@ import argparse
 import sys
 from pathlib import Path
 
-from vocab_db import DEFAULT_VOCAB_DB, connect_vocab_db, fetch_word, fetch_words
+from vocab_db import (
+    DEFAULT_VOCAB_DB,
+    connect_vocab_db,
+    fetch_word,
+    fetch_words,
+    format_create_at,
+)
 
 SEPARATOR = "\t"
 CARD_SEPARATOR = "---"
@@ -34,6 +40,12 @@ def field_text(value: object) -> str:
     return str(value).strip()
 
 
+def format_create_at_field(value: object) -> str:
+    if value is None or str(value).strip() == "":
+        return EMPTY
+    return f"{value} ({format_create_at(value)})"
+
+
 def format_check_output(row: dict) -> str:
     serial_no = row["serial_no"]
     lines = [
@@ -41,6 +53,12 @@ def format_check_output(row: dict) -> str:
         "",
         "單字",
         row["單字"],
+        "",
+        "source",
+        field_text(row.get("source")),
+        "",
+        "create_at",
+        format_create_at_field(row.get("create_at")),
         "",
         "中文解釋",
         field_text(row.get("中文解釋")),
@@ -70,7 +88,7 @@ def build_flashcard_text(rows: list[dict]) -> str:
         if not card or not str(card).strip():
             continue
         cards.append(str(card).strip())
-    return f"\n{CARD_SEPARATOR}\n".join(cards)
+    return f"\n\n{CARD_SEPARATOR}\n\n".join(cards)
 
 
 def main() -> int:

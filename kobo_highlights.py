@@ -9,9 +9,8 @@ from typing import Any, Optional, Union
 from vocab_db import (
     DEFAULT_VOCAB_DB,
     connect_vocab_db,
-    dedupe_words_preserve_order,
     ensure_schema,
-    insert_word,
+    import_words,
 )
 
 
@@ -213,20 +212,6 @@ def prompt_language() -> str:
         print("請輸入 1 到 3 之間的數字。", file=sys.stderr)
 
 
-def import_words_to_vocab(
-    vocab_conn: sqlite3.Connection, language: str, words: list[str]
-) -> tuple[int, int, int]:
-    deduped, raw_count = dedupe_words_preserve_order(words)
-    added = 0
-    skipped = 0
-    for word in deduped:
-        if insert_word(vocab_conn, language, word):
-            added += 1
-        else:
-            skipped += 1
-    return raw_count, added, skipped
-
-
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="從 Kobo SQLite 匯入劃線單字至 vocab.sqlite。")
     parser.add_argument(
@@ -268,6 +253,7 @@ def main() -> int:
     book_choice = prompt_choice("選擇書本...", len(books))
     selected_book = books[book_choice - 1]
     volume_id = selected_book["VolumeID"]
+    book_title = selected_book["BookTitle"] or selected_book["VolumeID"]
 
     chapters = fetch_chapters(kobo_conn, volume_id)
     if not chapters:
@@ -298,7 +284,9 @@ def main() -> int:
 
     vocab_conn = connect_vocab_db(args.vocab_db)
     ensure_schema(vocab_conn)
-    raw_count, added, skipped = import_words_to_vocab(vocab_conn, language, highlights)
+    raw_count, added, skipped = import_words(
+        vocab_conn, language, highlights, source=book_title
+    )
     vocab_conn.close()
 
     print()
